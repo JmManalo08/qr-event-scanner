@@ -27,10 +27,6 @@ body {
   text-align: center;
 }
 
-/* =========================
-   HEADER
-========================= */
-
 h1 {
   margin: 5px 0;
   font-size: 24px;
@@ -38,17 +34,89 @@ h1 {
 
 .scanner-id {
   color: #555;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 
-/* =========================
-   LARGE STATUS BANNER
-========================= */
+/* ONLINE / OFFLINE */
+
+#connectionStatus {
+
+  max-width: 600px;
+
+  margin: 8px auto;
+
+  padding: 10px;
+
+  border-radius: 10px;
+
+  font-weight: bold;
+
+  background: #168a3a;
+
+  color: white;
+
+}
+
+
+/* DATABASE BUTTON */
+
+#downloadButton {
+
+  width: 100%;
+
+  max-width: 600px;
+
+  padding: 15px;
+
+  margin: 8px auto;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background: #1976d2;
+
+  color: white;
+
+  font-size: 18px;
+
+  font-weight: bold;
+
+  cursor: pointer;
+
+}
+
+#downloadButton:active {
+  transform: scale(0.98);
+}
+
+
+/* DATABASE INFO */
+
+#databaseInfo {
+
+  max-width: 600px;
+
+  margin: 8px auto;
+
+  padding: 10px;
+
+  background: white;
+
+  border-radius: 10px;
+
+  font-size: 14px;
+
+}
+
+
+/* STATUS */
 
 #statusBanner {
 
   width: 100%;
+
   max-width: 600px;
 
   margin: 10px auto;
@@ -65,49 +133,30 @@ h1 {
 
   font-weight: bold;
 
-  transition: 0.2s;
-
 }
-
-
-/* READY */
 
 .status-ready {
   background: #1976d2 !important;
 }
 
-
-/* SUCCESS */
-
 .status-success {
   background: #168a3a !important;
 }
-
-
-/* DUPLICATE */
 
 .status-duplicate {
   background: #e58a00 !important;
 }
 
-
-/* INVALID */
-
 .status-invalid {
   background: #d62828 !important;
 }
-
-
-/* ERROR */
 
 .status-error {
   background: #8b0000 !important;
 }
 
 
-/* =========================
-   CAMERA
-========================= */
+/* CAMERA */
 
 #reader {
 
@@ -126,9 +175,7 @@ h1 {
 }
 
 
-/* =========================
-   LATEST RESULT
-========================= */
+/* RESULT */
 
 #result {
 
@@ -161,9 +208,7 @@ h1 {
 }
 
 
-/* =========================
-   SCAN HISTORY
-========================= */
+/* HISTORY */
 
 .history-container {
 
@@ -218,70 +263,43 @@ h1 {
 }
 
 .scan-item.duplicate {
-
   border-left-color: #e58a00;
-
 }
 
 .scan-item.invalid {
-
   border-left-color: #d62828;
-
 }
 
 .scan-time {
-
   font-size: 13px;
-
   color: #777;
-
 }
 
 .scan-name {
-
   font-weight: bold;
-
   font-size: 17px;
-
   margin-top: 4px;
-
 }
 
 .scan-id {
-
   font-size: 14px;
-
   color: #555;
-
 }
 
 .scan-result {
-
   font-weight: bold;
-
   margin-top: 5px;
-
 }
-
-
-/* =========================
-   MOBILE
-========================= */
 
 @media (max-width: 500px) {
 
   #statusBanner {
-
     font-size: 21px;
-
     padding: 16px 5px;
-
   }
 
   #result {
-
     font-size: 21px;
-
   }
 
 }
@@ -307,22 +325,38 @@ SCANNER-01
 </div>
 
 
-<!-- LARGE STATUS -->
+<div id="connectionStatus">
 
-<div id="statusBanner"
-     class="status-ready">
-
-READY TO SCAN
+🟢 ONLINE
 
 </div>
 
 
-<!-- CAMERA -->
+<button id="downloadButton"
+        onclick="downloadDatabase()">
+
+📥 DOWNLOAD APPLICANT DATABASE
+
+</button>
+
+
+<div id="databaseInfo">
+
+Database not downloaded yet.
+
+</div>
+
+
+<div id="statusBanner"
+     class="status-ready">
+
+🟢 READY TO SCAN
+
+</div>
+
 
 <div id="reader"></div>
 
-
-<!-- LATEST RESULT -->
 
 <div id="result">
 
@@ -330,8 +364,6 @@ Point the camera at a QR code
 
 </div>
 
-
-<!-- HISTORY -->
 
 <div class="history-container">
 
@@ -390,6 +422,10 @@ const SCANNER_ID =
 "SCANNER-01";
 
 
+const DATABASE_KEY =
+"qr_event_applicants";
+
+
 // =====================================
 // VARIABLES
 // =====================================
@@ -403,6 +439,8 @@ let totalScans = 0;
 let successfulScans = 0;
 
 let duplicateScans = 0;
+
+let applicants = [];
 
 
 // =====================================
@@ -419,6 +457,225 @@ document.getElementById(
 "result"
 );
 
+const connectionStatus =
+document.getElementById(
+"connectionStatus"
+);
+
+const databaseInfo =
+document.getElementById(
+"databaseInfo"
+);
+
+
+// =====================================
+// CONNECTION STATUS
+// =====================================
+
+function updateConnectionStatus() {
+
+  if (navigator.onLine) {
+
+    connectionStatus.innerHTML =
+    "🟢 ONLINE";
+
+    connectionStatus.style.background =
+    "#168a3a";
+
+  } else {
+
+    connectionStatus.innerHTML =
+    "📴 OFFLINE";
+
+    connectionStatus.style.background =
+    "#d62828";
+
+  }
+
+}
+
+
+window.addEventListener(
+"online",
+updateConnectionStatus
+);
+
+window.addEventListener(
+"offline",
+updateConnectionStatus
+);
+
+updateConnectionStatus();
+
+
+// =====================================
+// LOAD LOCAL DATABASE
+// =====================================
+
+function loadLocalDatabase() {
+
+  try {
+
+    const saved =
+    localStorage.getItem(
+      DATABASE_KEY
+    );
+
+
+    if (saved) {
+
+      applicants =
+      JSON.parse(saved);
+
+
+      databaseInfo.innerHTML =
+
+      "✅ <strong>" +
+      applicants.length +
+      "</strong> applicants stored on this device.";
+
+      return true;
+
+    }
+
+  }
+
+  catch(error) {
+
+    console.error(error);
+
+  }
+
+  return false;
+
+}
+
+
+// =====================================
+// DOWNLOAD DATABASE
+// =====================================
+
+async function downloadDatabase() {
+
+
+  if (!navigator.onLine) {
+
+    alert(
+      "You are currently offline. " +
+      "Connect to the internet first."
+    );
+
+    return;
+
+  }
+
+
+  const button =
+  document.getElementById(
+    "downloadButton"
+  );
+
+
+  button.disabled = true;
+
+  button.innerHTML =
+  "⏳ DOWNLOADING...";
+
+
+  databaseInfo.innerHTML =
+  "Connecting to Google Sheets...";
+
+
+  try {
+
+
+    const response =
+    await fetch(
+      API_URL +
+      "?api=applicants"
+    );
+
+
+    const data =
+    await response.json();
+
+
+    if (!data.success) {
+
+      throw new Error(
+        data.message ||
+        "Database download failed."
+      );
+
+    }
+
+
+    applicants =
+    data.applicants;
+
+
+    // Save to phone
+
+    localStorage.setItem(
+
+      DATABASE_KEY,
+
+      JSON.stringify(
+        applicants
+      )
+
+    );
+
+
+    databaseInfo.innerHTML =
+
+    "✅ <strong>" +
+    applicants.length +
+    "</strong> applicants downloaded.<br>" +
+
+    "This device can use this database offline.";
+
+
+    button.innerHTML =
+    "✅ DATABASE UPDATED";
+
+
+    setTimeout(
+      function() {
+
+        button.innerHTML =
+        "📥 UPDATE DATABASE";
+
+      },
+      2000
+    );
+
+
+  }
+
+  catch(error) {
+
+
+    console.error(error);
+
+
+    databaseInfo.innerHTML =
+
+    "❌ Download failed.<br>" +
+    error.message;
+
+
+    button.innerHTML =
+    "📥 TRY AGAIN";
+
+
+  }
+
+
+  button.disabled = false;
+
+}
+
 
 // =====================================
 // SHOW STATUS
@@ -429,8 +686,7 @@ type,
 text
 ) {
 
-  statusBanner.className =
-  "";
+  statusBanner.className = "";
 
   statusBanner.classList.add(
     "status-" + type
@@ -485,6 +741,7 @@ duration = 150
 
     oscillator.start();
 
+
     setTimeout(
       function() {
 
@@ -514,7 +771,7 @@ duration = 150
 // =====================================
 
 function vibrate(
-duration = 200
+duration
 ) {
 
   if (
@@ -585,13 +842,10 @@ async function startCamera() {
 
   }
 
-
   catch(error) {
 
 
-    console.error(
-      error
-    );
+    console.error(error);
 
 
     showStatus(
@@ -601,9 +855,7 @@ async function startCamera() {
 
 
     result.innerHTML =
-
-    "Please allow camera access " +
-    "and reload the page.";
+    "Please allow camera access.";
 
   }
 
@@ -618,9 +870,7 @@ function startScanner() {
 
 
   if (scanner) {
-
     return;
-
   }
 
 
@@ -652,11 +902,8 @@ function startScanner() {
 
 
   scanner.render(
-
     onScanSuccess,
-
     onScanFailure
-
   );
 
 
@@ -666,7 +913,34 @@ function startScanner() {
 
 
 // =====================================
-// QR SUCCESS
+// FIND LOCAL APPLICANT
+// =====================================
+
+function findApplicant(
+applicantId
+) {
+
+  return applicants.find(
+
+    applicant =>
+
+    String(
+      applicant.applicantId
+    ).trim()
+
+    ===
+
+    String(
+      applicantId
+    ).trim()
+
+  );
+
+}
+
+
+// =====================================
+// QR SCANNED
 // =====================================
 
 async function onScanSuccess(
@@ -675,9 +949,7 @@ decodedText
 
 
   if (!scanning) {
-
     return;
-
   }
 
 
@@ -697,301 +969,422 @@ decodedText
   try {
 
 
-    const response =
-    await fetch(
-
-      API_URL,
-
-      {
-
-        method:
-        "POST",
-
-        headers: {
-
-          "Content-Type":
-          "text/plain;charset=utf-8"
-
-        },
-
-        body:
-        JSON.stringify({
-
-          applicantId:
-          decodedText,
-
-          scannerId:
-          SCANNER_ID
-
-        })
-
-      }
-
-    );
-
-
-    const data =
-    await response.json();
-
-
     // =================================
-    // SUCCESS
+    // ONLINE
     // =================================
 
-    if (
-      data.success
-    ) {
+    if (navigator.onLine) {
 
 
-      totalScans++;
+      const response =
+      await fetch(
 
-      successfulScans++;
+        API_URL,
 
+        {
 
-      showStatus(
+          method:
+          "POST",
 
-        "success",
+          headers: {
 
-        "🟢 CHECK-IN SUCCESSFUL"
+            "Content-Type":
+            "text/plain;charset=utf-8"
 
-      );
+          },
 
+          body:
+          JSON.stringify({
 
-      result.innerHTML =
+            applicantId:
+            decodedText,
 
-      "<div style='font-size:30px;'>✓</div>" +
+            scannerId:
+            SCANNER_ID
 
-      "<div>" +
-      data.fullName +
-      "</div>" +
+          })
 
-      "<div style='font-size:18px;margin-top:8px;'>" +
-      "Applicant ID: " +
-      data.applicantId +
-      "</div>" +
-
-      "<div style='margin-top:10px;font-size:17px;'>" +
-      "SCAN RECORDED" +
-      "</div>";
-
-
-      beep(
-        1000,
-        180
-      );
-
-
-      vibrate(
-        250
-      );
-
-
-      addHistory(
-
-        data.fullName,
-
-        data.applicantId,
-
-        "CHECKED IN",
-
-        "success"
+        }
 
       );
+
+
+      const data =
+      await response.json();
+
+
+      processServerResult(
+        data,
+        decodedText
+      );
+
 
     }
 
 
     // =================================
-    // DUPLICATE
-    // =================================
-
-    else if (
-      data.duplicate
-    ) {
-
-
-      totalScans++;
-
-      duplicateScans++;
-
-
-      showStatus(
-
-        "duplicate",
-
-        "🟠 ALREADY CHECKED IN"
-
-      );
-
-
-      result.innerHTML =
-
-      "<div style='font-size:30px;'>⚠️</div>" +
-
-      "<div>" +
-      data.fullName +
-      "</div>" +
-
-      "<div style='font-size:18px;margin-top:8px;'>" +
-      "Applicant ID: " +
-      data.applicantId +
-      "</div>" +
-
-      "<div style='margin-top:10px;font-size:17px;'>" +
-      "THIS APPLICANT WAS ALREADY SCANNED" +
-      "</div>";
-
-
-      beep(
-        500,
-        350
-      );
-
-
-      vibrate(
-        [200,100,200]
-      );
-
-
-      addHistory(
-
-        data.fullName,
-
-        data.applicantId,
-
-        "ALREADY CHECKED IN",
-
-        "duplicate"
-
-      );
-
-    }
-
-
-    // =================================
-    // INVALID
+    // OFFLINE
     // =================================
 
     else {
 
 
-      totalScans++;
-
-
-      showStatus(
-
-        "invalid",
-
-        "🔴 INVALID QR CODE"
-
-      );
-
-
-      result.innerHTML =
-
-      "<div style='font-size:30px;'>❌</div>" +
-
-      "<div>INVALID QR CODE</div>" +
-
-      "<div style='font-size:16px;margin-top:10px;'>" +
-      decodedText +
-      "</div>";
-
-
-      beep(
-        250,
-        500
-      );
-
-
-      vibrate(
-        400
-      );
-
-
-      addHistory(
-
-        "Unknown Applicant",
-
-        decodedText,
-
-        "INVALID QR",
-
-        "invalid"
-
+      processOfflineScan(
+        decodedText
       );
 
     }
 
 
-    updateStats();
-
-
   }
-
 
   catch(error) {
 
 
-    console.error(
-      error
-    );
+    console.error(error);
+
+
+    // If internet suddenly disappeared,
+    // try offline mode.
+
+    if (!navigator.onLine) {
+
+      processOfflineScan(
+        decodedText
+      );
+
+    }
+
+    else {
+
+      showStatus(
+        "error",
+        "🔴 CONNECTION ERROR"
+      );
+
+      result.innerHTML =
+      "Cannot reach server.";
+
+    }
+
+  }
+
+
+  setTimeout(
+    function() {
+
+      scanning = true;
+
+      showStatus(
+        "ready",
+        "🟢 READY TO SCAN"
+      );
+
+      result.innerHTML =
+      "Point the camera at a QR code";
+
+    },
+    2500
+  );
+
+}
+
+
+// =====================================
+// ONLINE RESULT
+// =====================================
+
+function processServerResult(
+data,
+decodedText
+) {
+
+
+  if (data.success) {
+
+
+    totalScans++;
+
+    successfulScans++;
 
 
     showStatus(
-
-      "error",
-
-      "🔴 CONNECTION ERROR"
-
+      "success",
+      "🟢 CHECK-IN SUCCESSFUL"
     );
 
 
     result.innerHTML =
 
-    "The scanner cannot reach " +
-    "the server.";
+    "<div style='font-size:30px;'>✓</div>" +
+
+    "<div>" +
+    data.fullName +
+    "</div>" +
+
+    "<div style='font-size:18px;margin-top:8px;'>" +
+    "Applicant ID: " +
+    data.applicantId +
+    "</div>" +
+
+    "<div style='margin-top:10px;font-size:17px;'>" +
+    "SCAN RECORDED" +
+    "</div>";
 
 
-    vibrate(
-      400
+    beep(
+      1000,
+      180
     );
 
+    vibrate(250);
+
+
+    addHistory(
+      data.fullName,
+      data.applicantId,
+      "CHECKED IN",
+      "success"
+    );
 
   }
 
 
-  // =================================
-  // RETURN TO CAMERA
-  // =================================
-
-  setTimeout(
-
-    function() {
+  else if (data.duplicate) {
 
 
-      scanning = true;
+    totalScans++;
+
+    duplicateScans++;
 
 
-      showStatus(
-
-        "ready",
-
-        "🟢 READY TO SCAN"
-
-      );
+    showStatus(
+      "duplicate",
+      "🟠 ALREADY CHECKED IN"
+    );
 
 
-      result.innerHTML =
+    result.innerHTML =
 
-      "Point the camera at a QR code";
+    "<div style='font-size:30px;'>⚠️</div>" +
+
+    "<div>" +
+    data.fullName +
+    "</div>" +
+
+    "<div style='font-size:18px;margin-top:8px;'>" +
+    "Applicant ID: " +
+    data.applicantId +
+    "</div>" +
+
+    "<div style='margin-top:10px;font-size:17px;'>" +
+    "ALREADY SCANNED" +
+    "</div>";
 
 
-    },
+    beep(
+      500,
+      350
+    );
 
-    2500
+    vibrate(
+      [200,100,200]
+    );
 
+
+    addHistory(
+      data.fullName,
+      data.applicantId,
+      "ALREADY CHECKED IN",
+      "duplicate"
+    );
+
+  }
+
+
+  else {
+
+
+    totalScans++;
+
+
+    showStatus(
+      "invalid",
+      "🔴 INVALID QR CODE"
+    );
+
+
+    result.innerHTML =
+
+    "<div style='font-size:30px;'>❌</div>" +
+
+    "<div>INVALID QR CODE</div>";
+
+
+    beep(
+      250,
+      500
+    );
+
+    vibrate(400);
+
+
+    addHistory(
+      "Unknown Applicant",
+      decodedText,
+      "INVALID QR",
+      "invalid"
+    );
+
+  }
+
+
+  updateStats();
+
+}
+
+
+// =====================================
+// OFFLINE SCAN
+// =====================================
+
+function processOfflineScan(
+decodedText
+) {
+
+
+  const applicant =
+  findApplicant(
+    decodedText
   );
+
+
+  // No database
+
+  if (!applicants.length) {
+
+
+    showStatus(
+      "error",
+      "❌ NO OFFLINE DATABASE"
+    );
+
+
+    result.innerHTML =
+
+    "Connect to the internet and " +
+    "download the applicant database first.";
+
+
+    beep(
+      250,
+      500
+    );
+
+    vibrate(400);
+
+    return;
+
+  }
+
+
+  // Applicant not found
+
+  if (!applicant) {
+
+
+    totalScans++;
+
+
+    showStatus(
+      "invalid",
+      "🔴 INVALID QR CODE"
+    );
+
+
+    result.innerHTML =
+
+    "<div style='font-size:30px;'>❌</div>" +
+
+    "<div>APPLICANT NOT FOUND</div>" +
+
+    "<div style='font-size:16px;margin-top:8px;'>" +
+    decodedText +
+    "</div>";
+
+
+    beep(
+      250,
+      500
+    );
+
+    vibrate(400);
+
+
+    addHistory(
+      "Unknown Applicant",
+      decodedText,
+      "INVALID QR",
+      "invalid"
+    );
+
+
+    updateStats();
+
+
+    return;
+
+  }
+
+
+  // Valid offline applicant
+
+  totalScans++;
+
+  successfulScans++;
+
+
+  showStatus(
+    "success",
+    "🟢 OFFLINE CHECK-IN"
+  );
+
+
+  result.innerHTML =
+
+  "<div style='font-size:30px;'>✓</div>" +
+
+  "<div>" +
+  applicant.fullName +
+  "</div>" +
+
+  "<div style='font-size:18px;margin-top:8px;'>" +
+  "Applicant ID: " +
+  applicant.applicantId +
+  "</div>" +
+
+  "<div style='margin-top:10px;font-size:17px;'>" +
+  "💾 SAVED ON THIS DEVICE" +
+  "</div>";
+
+
+  beep(
+    1000,
+    180
+  );
+
+  vibrate(250);
+
+
+  addHistory(
+    applicant.fullName,
+    applicant.applicantId,
+    "OFFLINE CHECK-IN",
+    "success"
+  );
+
+
+  updateStats();
 
 }
 
@@ -1090,7 +1483,7 @@ type
 
 
 // =====================================
-// STATISTICS
+// STATS
 // =====================================
 
 function updateStats() {
@@ -1117,7 +1510,7 @@ function updateStats() {
 
 
 // =====================================
-// IGNORE SCAN FAILURES
+// SCAN FAILURE
 // =====================================
 
 function onScanFailure(
@@ -1132,20 +1525,26 @@ error
 // =====================================
 
 document.getElementById(
-  "scannerIdDisplay"
+"scannerIdDisplay"
 ).innerText =
 SCANNER_ID;
 
 
 // =====================================
-// START
+// LOAD DATABASE
+// =====================================
+
+loadLocalDatabase();
+
+
+// =====================================
+// START CAMERA
 // =====================================
 
 window.addEventListener(
-  "load",
-  startCamera
+"load",
+startCamera
 );
-
 
 </script>
 
