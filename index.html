@@ -442,6 +442,11 @@ let duplicateScans = 0;
 
 let applicants = [];
 
+let offlineQueue = [];
+
+const OFFLINE_QUEUE_KEY = "qr_event_offline_queue";
+const OFFLINE_SCANNED_KEY = "qr_event_offline_scanned";
+
 
 // =====================================
 // ELEMENTS
@@ -497,15 +502,23 @@ function updateConnectionStatus() {
 
 window.addEventListener(
 "online",
-updateConnectionStatus
+function() {
+
+  updateConnectionStatus();
+
+  syncOfflineScans();
+
+}
 );
 
 window.addEventListener(
 "offline",
-updateConnectionStatus
-);
+function() {
 
-updateConnectionStatus();
+  updateConnectionStatus();
+
+}
+);
 
 
 // =====================================
@@ -911,6 +924,286 @@ function startScanner() {
 
 }
 
+// =====================================
+// OFFLINE QUEUE
+// =====================================
+
+function loadOfflineQueue() {
+
+  try {
+
+    const saved =
+      localStorage.getItem(
+        OFFLINE_QUEUE_KEY
+      );
+
+    offlineQueue =
+      saved ? JSON.parse(saved) : [];
+
+  } catch (error) {
+
+    console.error(
+      "Could not load offline queue:",
+      error
+    );
+
+    offlineQueue = [];
+
+  }
+
+}
+
+
+// =====================================
+// SAVE OFFLINE QUEUE
+// =====================================
+
+function saveOfflineQueue() {
+
+  localStorage.setItem(
+
+    OFFLINE_QUEUE_KEY,
+
+    JSON.stringify(
+      offlineQueue
+    )
+
+  );
+
+}
+
+
+// =====================================
+// OFFLINE SCANNED IDS
+// =====================================
+
+function getOfflineScannedIds() {
+
+  try {
+
+    const saved =
+      localStorage.getItem(
+        OFFLINE_SCANNED_KEY
+      );
+
+    return saved
+      ? JSON.parse(saved)
+      : [];
+
+  } catch (error) {
+
+    return [];
+
+  }
+
+}
+
+
+// =====================================
+// MARK APPLICANT AS SCANNED OFFLINE
+// =====================================
+
+function markOfflineScanned(
+  applicantId
+) {
+
+  const ids =
+    getOfflineScannedIds();
+
+  if (
+    !ids.includes(applicantId)
+  ) {
+
+    ids.push(applicantId);
+
+    localStorage.setItem(
+
+      OFFLINE_SCANNED_KEY,
+
+      JSON.stringify(ids)
+
+    );
+
+  }
+
+}
+
+
+// =====================================
+// CHECK LOCAL DUPLICATE
+// =====================================
+
+function wasScannedOffline(
+  applicantId
+) {
+
+  const ids =
+    getOfflineScannedIds();
+
+  return ids.includes(
+    applicantId
+  );
+
+}
+
+
+// =====================================
+// SYNC OFFLINE SCANS
+// =====================================
+
+async function syncOfflineScans() {
+
+  if (
+    !navigator.onLine
+  ) {
+
+    return;
+
+  }
+
+
+  loadOfflineQueue();
+
+
+  if (
+    offlineQueue.length === 0
+  ) {
+
+    return;
+
+  }
+
+
+  connectionStatus.innerHTML =
+    "🔄 SYNCING OFFLINE SCANS...";
+
+
+  connectionStatus.style.background =
+    "#1976d2";
+
+
+  const remaining = [];
+
+
+  for (
+    const scan of offlineQueue
+  ) {
+
+    try {
+
+
+      const response =
+        await fetch(
+
+          API_URL,
+
+          {
+
+            method:
+              "POST",
+
+            headers: {
+
+              "Content-Type":
+                "text/plain;charset=utf-8"
+
+            },
+
+            body:
+              JSON.stringify({
+
+                applicantId:
+                  scan.applicantId,
+
+                scannerId:
+                  scan.scannerId,
+
+                scanId:
+                  scan.scanId,
+
+                scanTime:
+                  scan.scanTime,
+
+                offline:
+                  true
+
+              })
+
+          }
+
+        );
+
+
+      const data =
+        await response.json();
+
+
+      if (
+        data.success ||
+        data.duplicate
+      ) {
+
+        // Successfully handled by server
+
+        continue;
+
+      }
+
+
+      // Keep it for another attempt
+
+      remaining.push(
+        scan
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "Sync failed:",
+        error
+      );
+
+      remaining.push(
+        scan
+      );
+
+    }
+
+  }
+
+
+  offlineQueue =
+    remaining;
+
+
+  saveOfflineQueue();
+
+
+  if (
+    offlineQueue.length === 0
+  ) {
+
+    connectionStatus.innerHTML =
+      "🟢 ONLINE — ALL SCANS SYNCED";
+
+    connectionStatus.style.background =
+      "#168a3a";
+
+  } else {
+
+    connectionStatus.innerHTML =
+
+      "🟠 ONLINE — " +
+      offlineQueue.length +
+      " SCANS PENDING";
+
+    connectionStatus.style.background =
+      "#e58a00";
+
+  }
+
+}
 
 // =====================================
 // FIND LOCAL APPLICANT
@@ -1249,8 +1542,294 @@ decodedText
 // =====================================
 
 function processOfflineScan(
-decodedText
+  decodedText
 ) {
+
+  const applicant =
+    findApplicant(
+      decodedText
+    );
+
+
+  // =================================
+  // NO LOCAL DATABASE
+  // =================================
+
+  if (
+    !applicants.length
+  ) {
+
+    showStatus(
+      "error",
+      "❌ NO OFFLINE DATABASE"
+    );
+
+
+    result.innerHTML =
+
+      "Download the applicant database " +
+      "before using offline mode.";
+
+
+    beep(
+      250,
+      500
+    );
+
+    vibrate(400);
+
+    return;
+
+  }
+
+
+  // =================================
+  // APPLICANT NOT FOUND
+  // =================================
+
+  if (!applicant) {
+
+    totalScans++;
+
+
+    showStatus(
+      "invalid",
+      "🔴 INVALID QR CODE"
+    );
+
+
+    result.innerHTML =
+
+      "<div style='font-size:30px;'>❌</div>" +
+
+      "<div>APPLICANT NOT FOUND</div>" +
+
+      "<div style='font-size:16px;margin-top:8px;'>" +
+
+      decodedText +
+
+      "</div>";
+
+
+    beep(
+      250,
+      500
+    );
+
+    vibrate(400);
+
+
+    addHistory(
+
+      "Unknown Applicant",
+
+      decodedText,
+
+      "INVALID QR",
+
+      "invalid"
+
+    );
+
+
+    updateStats();
+
+    return;
+
+  }
+
+
+  // =================================
+  // LOCAL DUPLICATE
+  // =================================
+
+  if (
+    wasScannedOffline(
+      applicant.applicantId
+    )
+  ) {
+
+    totalScans++;
+
+    duplicateScans++;
+
+
+    showStatus(
+      "duplicate",
+      "🟠 ALREADY SCANNED"
+    );
+
+
+    result.innerHTML =
+
+      "<div style='font-size:30px;'>⚠️</div>" +
+
+      "<div>" +
+      applicant.fullName +
+      "</div>" +
+
+      "<div style='font-size:18px;margin-top:8px;'>" +
+
+      "Applicant ID: " +
+      applicant.applicantId +
+
+      "</div>" +
+
+      "<div style='margin-top:10px;font-size:17px;'>" +
+
+      "ALREADY SCANNED ON THIS DEVICE" +
+
+      "</div>";
+
+
+    beep(
+      500,
+      350
+    );
+
+    vibrate(
+      [200,100,200]
+    );
+
+
+    addHistory(
+
+      applicant.fullName,
+
+      applicant.applicantId,
+
+      "ALREADY SCANNED",
+
+      "duplicate"
+
+    );
+
+
+    updateStats();
+
+    return;
+
+  }
+
+
+  // =================================
+  // CREATE OFFLINE SCAN
+  // =================================
+
+  const scan = {
+
+    scanId:
+      crypto.randomUUID
+        ? crypto.randomUUID()
+        : String(
+            Date.now()
+          ) +
+          "-" +
+          Math.random()
+            .toString(36)
+            .substring(2),
+
+    applicantId:
+      applicant.applicantId,
+
+    fullName:
+      applicant.fullName,
+
+    scannerId:
+      SCANNER_ID,
+
+    scanTime:
+      new Date().toISOString(),
+
+    offline:
+      true
+
+  };
+
+
+  // =================================
+  // SAVE TO PHONE
+  // =================================
+
+  offlineQueue.push(
+    scan
+  );
+
+  saveOfflineQueue();
+
+
+  markOfflineScanned(
+    applicant.applicantId
+  );
+
+
+  // =================================
+  // SHOW SUCCESS
+  // =================================
+
+  totalScans++;
+
+  successfulScans++;
+
+
+  showStatus(
+    "success",
+    "🟢 OFFLINE CHECK-IN"
+  );
+
+
+  result.innerHTML =
+
+    "<div style='font-size:34px;'>✓</div>" +
+
+    "<div>" +
+    applicant.fullName +
+    "</div>" +
+
+    "<div style='font-size:18px;margin-top:8px;'>" +
+
+    "Applicant ID: " +
+    applicant.applicantId +
+
+    "</div>" +
+
+    "<div style='margin-top:10px;font-size:17px;'>" +
+
+    "💾 SAVED ON DEVICE" +
+
+    "</div>" +
+
+    "<div style='margin-top:6px;font-size:14px;color:#777;'>" +
+
+    "Will sync automatically when online" +
+
+    "</div>";
+
+
+  beep(
+    1000,
+    180
+  );
+
+  vibrate(250);
+
+
+  addHistory(
+
+    applicant.fullName,
+
+    applicant.applicantId,
+
+    "OFFLINE — PENDING SYNC",
+
+    "success"
+
+  );
+
+
+  updateStats();
+
+}
 
 
   const applicant =
@@ -1535,6 +2114,10 @@ SCANNER_ID;
 // =====================================
 
 loadLocalDatabase();
+
+loadOfflineQueue();
+
+syncOfflineScans();
 
 
 // =====================================
