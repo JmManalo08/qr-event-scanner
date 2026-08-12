@@ -21,7 +21,15 @@
     }
 
     h1 {
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+    }
+
+    #status {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 15px auto;
+      max-width: 500px;
     }
 
     #reader {
@@ -50,81 +58,163 @@
     .error {
       color: red;
     }
+
+    button {
+      padding: 14px 25px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
   </style>
 </head>
 
 <body>
 
-  <h1>QR Event Scanner</h1>
+<h1>📷 QR Event Scanner</h1>
 
-  <div id="reader"></div>
+<div id="status">
+  Camera is starting...
+</div>
 
-  <div id="result">
-    Ready to scan
-  </div>
+<div id="reader"></div>
 
-  <script>
-
-    let alreadyScanned = false;
-
-    function onScanSuccess(decodedText) {
-
-      if (alreadyScanned) {
-        return;
-      }
-
-      alreadyScanned = true;
-
-      document.getElementById("result").innerHTML =
-        "✅ QR Detected<br><br>" +
-        decodedText;
-
-      document.getElementById("result")
-        .className = "success";
-
-      console.log("QR:", decodedText);
-
-      setTimeout(function() {
-
-        alreadyScanned = false;
-
-        document.getElementById("result")
-          .innerHTML = "Ready to scan";
-
-        document.getElementById("result")
-          .className = "";
-
-      }, 2000);
-    }
+<div id="result">
+  Ready to scan
+</div>
 
 
-    function onScanFailure(error) {
-      // Normal camera scanning failures are ignored.
-    }
+<script>
+
+let scanner = null;
+let scanning = false;
 
 
-    const scanner = new Html5QrcodeScanner(
-      "reader",
-      {
-        fps: 10,
+// Start camera automatically
+async function startCamera() {
 
-        qrbox: {
-          width: 250,
-          height: 250
-        },
+  const status = document.getElementById("status");
 
-        rememberLastUsedCamera: true
+  status.innerHTML =
+    "📷 Requesting camera permission...";
+
+  try {
+
+    // Explicitly request camera permission
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: {
+          ideal: "environment"
+        }
       },
-      false
-    );
+      audio: false
+    });
+
+    // Permission granted
+    status.innerHTML =
+      "✅ Camera permission granted.<br>" +
+      "Starting scanner...";
+
+    // Stop the temporary camera stream
+    stream.getTracks().forEach(track => track.stop());
+
+    startScanner();
+
+  } catch (error) {
+
+    console.error(error);
+
+    status.innerHTML =
+      "❌ Camera access is blocked.<br><br>" +
+
+      "Please allow camera access for this website " +
+      "in your browser settings, then reload this page.";
+
+    document.getElementById("result").innerHTML =
+      "📷 Camera permission required";
+
+    document.getElementById("result")
+      .className = "error";
+  }
+}
 
 
-    scanner.render(
-      onScanSuccess,
-      onScanFailure
-    );
+// Start QR scanner
+function startScanner() {
 
-  </script>
+  if (scanner) {
+    return;
+  }
+
+  scanner = new Html5QrcodeScanner(
+    "reader",
+    {
+      fps: 10,
+
+      qrbox: {
+        width: 250,
+        height: 250
+      },
+
+      rememberLastUsedCamera: true
+    },
+    false
+  );
+
+  scanner.render(
+    onScanSuccess,
+    onScanFailure
+  );
+
+  scanning = true;
+}
+
+
+// QR detected
+function onScanSuccess(decodedText) {
+
+  if (!scanning) {
+    return;
+  }
+
+  scanning = false;
+
+  document.getElementById("result").innerHTML =
+    "✅ QR DETECTED<br><br>" +
+    decodedText;
+
+  document.getElementById("result")
+    .className = "success";
+
+  console.log("QR:", decodedText);
+
+
+  setTimeout(function() {
+
+    scanning = true;
+
+    document.getElementById("result")
+      .innerHTML = "Ready to scan";
+
+    document.getElementById("result")
+      .className = "";
+
+  }, 2000);
+}
+
+
+// Ignore normal scan failures
+function onScanFailure(error) {
+}
+
+
+// Automatically start camera
+window.addEventListener(
+  "load",
+  startCamera
+);
+
+</script>
 
 </body>
 </html>
