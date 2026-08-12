@@ -3,213 +3,396 @@
 
 <head>
 
-  <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-  <title>QR Event Scanner</title>
+<title>QR Event Scanner</title>
 
-  <script src="https://unpkg.com/html5-qrcode"
-          type="text/javascript"></script>
+<script src="https://unpkg.com/html5-qrcode"
+        type="text/javascript"></script>
 
-  <style>
+<style>
 
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      margin: 0;
-      padding: 15px;
-      text-align: center;
-    }
+* {
+  box-sizing: border-box;
+}
 
-    h1 {
-      margin: 5px 0;
-    }
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+  margin: 0;
+  padding: 12px;
+  text-align: center;
+}
 
-    .scanner-id {
-      font-size: 16px;
-      margin-bottom: 15px;
-      color: #555;
-    }
+/* =========================
+   HEADER
+========================= */
 
-    #status {
-      background: white;
-      padding: 12px;
-      border-radius: 10px;
-      margin: 10px auto;
-      max-width: 500px;
-    }
+h1 {
+  margin: 5px 0;
+  font-size: 24px;
+}
 
-    #reader {
-      width: 100%;
-      max-width: 500px;
-      margin: auto;
-      background: white;
-      border-radius: 12px;
-      padding: 10px;
-      box-sizing: border-box;
-    }
+.scanner-id {
+  color: #555;
+  margin-bottom: 10px;
+}
 
-    #result {
-      max-width: 500px;
-      margin: 15px auto;
-      padding: 20px;
-      background: white;
-      border-radius: 12px;
-      font-size: 20px;
-      font-weight: bold;
-    }
 
-    .success {
-      color: green;
-      border: 3px solid green;
-    }
+/* =========================
+   LARGE STATUS BANNER
+========================= */
 
-    .error {
-      color: red;
-      border: 3px solid red;
-    }
+#statusBanner {
 
-    .history-container {
-      max-width: 500px;
-      margin: 20px auto;
-      text-align: left;
-    }
+  width: 100%;
+  max-width: 600px;
 
-    .history-title {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 10px;
-      text-align: center;
-    }
+  margin: 10px auto;
 
-    .stats {
-      background: white;
-      padding: 12px;
-      border-radius: 10px;
-      margin-bottom: 10px;
-      text-align: center;
-    }
+  padding: 18px 10px;
 
-    .scan-item {
-      background: white;
-      padding: 12px;
-      margin-bottom: 8px;
-      border-radius: 10px;
-      border-left: 6px solid green;
-    }
+  border-radius: 14px;
 
-    .scan-item.duplicate {
-      border-left-color: orange;
-    }
+  background: #1976d2;
 
-    .scan-item.invalid {
-      border-left-color: red;
-    }
+  color: white;
 
-    .scan-time {
-      font-size: 13px;
-      color: #777;
-    }
+  font-size: 24px;
 
-    .scan-name {
-      font-weight: bold;
-      font-size: 17px;
-      margin-top: 4px;
-    }
+  font-weight: bold;
 
-    .scan-id {
-      font-size: 14px;
-      color: #555;
-    }
+  transition: 0.2s;
 
-    .scan-result {
-      font-weight: bold;
-      margin-top: 5px;
-    }
+}
 
-  </style>
+
+/* READY */
+
+.status-ready {
+  background: #1976d2 !important;
+}
+
+
+/* SUCCESS */
+
+.status-success {
+  background: #168a3a !important;
+}
+
+
+/* DUPLICATE */
+
+.status-duplicate {
+  background: #e58a00 !important;
+}
+
+
+/* INVALID */
+
+.status-invalid {
+  background: #d62828 !important;
+}
+
+
+/* ERROR */
+
+.status-error {
+  background: #8b0000 !important;
+}
+
+
+/* =========================
+   CAMERA
+========================= */
+
+#reader {
+
+  width: 100%;
+
+  max-width: 600px;
+
+  margin: auto;
+
+  background: white;
+
+  border-radius: 14px;
+
+  padding: 8px;
+
+}
+
+
+/* =========================
+   LATEST RESULT
+========================= */
+
+#result {
+
+  width: 100%;
+
+  max-width: 600px;
+
+  margin: 12px auto;
+
+  padding: 20px;
+
+  background: white;
+
+  border-radius: 14px;
+
+  font-size: 22px;
+
+  font-weight: bold;
+
+  min-height: 100px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-direction: column;
+
+}
+
+
+/* =========================
+   SCAN HISTORY
+========================= */
+
+.history-container {
+
+  width: 100%;
+
+  max-width: 600px;
+
+  margin: 20px auto;
+
+  text-align: left;
+
+}
+
+.history-title {
+
+  text-align: center;
+
+  font-size: 21px;
+
+  font-weight: bold;
+
+  margin-bottom: 10px;
+
+}
+
+.stats {
+
+  background: white;
+
+  padding: 12px;
+
+  border-radius: 10px;
+
+  text-align: center;
+
+  margin-bottom: 10px;
+
+}
+
+.scan-item {
+
+  background: white;
+
+  padding: 12px;
+
+  margin-bottom: 8px;
+
+  border-radius: 10px;
+
+  border-left: 7px solid #168a3a;
+
+}
+
+.scan-item.duplicate {
+
+  border-left-color: #e58a00;
+
+}
+
+.scan-item.invalid {
+
+  border-left-color: #d62828;
+
+}
+
+.scan-time {
+
+  font-size: 13px;
+
+  color: #777;
+
+}
+
+.scan-name {
+
+  font-weight: bold;
+
+  font-size: 17px;
+
+  margin-top: 4px;
+
+}
+
+.scan-id {
+
+  font-size: 14px;
+
+  color: #555;
+
+}
+
+.scan-result {
+
+  font-weight: bold;
+
+  margin-top: 5px;
+
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 500px) {
+
+  #statusBanner {
+
+    font-size: 21px;
+
+    padding: 16px 5px;
+
+  }
+
+  #result {
+
+    font-size: 21px;
+
+  }
+
+}
+
+</style>
 
 </head>
 
 
 <body>
 
-  <h1>📷 QR Event Scanner</h1>
 
-  <div class="scanner-id">
-    Scanner: <strong id="scannerIdDisplay">SCANNER-01</strong>
-  </div>
+<h1>📷 QR EVENT SCANNER</h1>
 
 
-  <div id="status">
-    📷 Camera is starting...
-  </div>
+<div class="scanner-id">
+
+Scanner:
+<strong id="scannerIdDisplay">
+SCANNER-01
+</strong>
+
+</div>
 
 
-  <div id="reader"></div>
+<!-- LARGE STATUS -->
+
+<div id="statusBanner"
+     class="status-ready">
+
+READY TO SCAN
+
+</div>
 
 
-  <div id="result">
-    Ready to scan
-  </div>
+<!-- CAMERA -->
+
+<div id="reader"></div>
 
 
-  <div class="history-container">
+<!-- LATEST RESULT -->
 
-    <div class="history-title">
-      📋 Scan History
-    </div>
+<div id="result">
 
+Point the camera at a QR code
 
-    <div class="stats">
-
-      Total Scans:
-      <strong id="totalScans">0</strong>
-
-      &nbsp; | &nbsp;
-
-      Successful:
-      <strong id="successfulScans">0</strong>
-
-      &nbsp; | &nbsp;
-
-      Duplicate:
-      <strong id="duplicateScans">0</strong>
-
-    </div>
+</div>
 
 
-    <div id="history">
+<!-- HISTORY -->
 
-      <div style="text-align:center;color:#777;">
-        No scans yet
-      </div>
+<div class="history-container">
 
-    </div>
 
-  </div>
+<div class="history-title">
+
+📋 SCAN HISTORY
+
+</div>
+
+
+<div class="stats">
+
+Total:
+<strong id="totalScans">0</strong>
+
+&nbsp; | &nbsp;
+
+Successful:
+<strong id="successfulScans">0</strong>
+
+&nbsp; | &nbsp;
+
+Duplicate:
+<strong id="duplicateScans">0</strong>
+
+</div>
+
+
+<div id="history">
+
+<div style="text-align:center;color:#777;">
+
+No scans yet
+
+</div>
+
+</div>
+
+
+</div>
 
 
 <script>
 
 
-// ======================================
+// =====================================
 // SETTINGS
-// ======================================
+// =====================================
 
 const API_URL =
 "https://script.google.com/macros/s/AKfycbypcSVmjnzEWCLEHcTcFZTF2iZAYD6ReDAQp_pfh9EQDu54fe1TwayyYL4ZBj-17YiMmw/exec";
 
 
-// Change this for each scanner
-const SCANNER_ID = "SCANNER-01";
+const SCANNER_ID =
+"SCANNER-01";
 
 
-// ======================================
+// =====================================
 // VARIABLES
-// ======================================
+// =====================================
 
 let scanner = null;
 
@@ -222,99 +405,258 @@ let successfulScans = 0;
 let duplicateScans = 0;
 
 
-// ======================================
-// CAMERA
-// ======================================
+// =====================================
+// ELEMENTS
+// =====================================
 
-async function startCamera() {
+const statusBanner =
+document.getElementById(
+"statusBanner"
+);
 
-  const status =
-    document.getElementById("status");
+const result =
+document.getElementById(
+"result"
+);
 
 
-  status.innerHTML =
-    "📷 Requesting camera permission...";
+// =====================================
+// SHOW STATUS
+// =====================================
 
+function showStatus(
+type,
+text
+) {
+
+  statusBanner.className =
+  "";
+
+  statusBanner.classList.add(
+    "status-" + type
+  );
+
+  statusBanner.innerHTML =
+  text;
+
+}
+
+
+// =====================================
+// SOUND
+// =====================================
+
+function beep(
+frequency = 800,
+duration = 150
+) {
 
   try {
 
-    const stream =
-      await navigator.mediaDevices.getUserMedia({
+    const AudioContext =
+    window.AudioContext ||
+    window.webkitAudioContext;
 
-        video: {
-          facingMode: {
-            ideal: "environment"
-          }
-        },
+    const audioContext =
+    new AudioContext();
 
-        audio: false
+    const oscillator =
+    audioContext.createOscillator();
 
-      });
+    const gain =
+    audioContext.createGain();
 
-
-    status.innerHTML =
-      "✅ Camera ready";
-
-
-    stream.getTracks().forEach(
-      track => track.stop()
+    oscillator.connect(
+      gain
     );
 
+    gain.connect(
+      audioContext.destination
+    );
 
-    startScanner();
+    oscillator.frequency.value =
+    frequency;
 
+    oscillator.type =
+    "sine";
 
-  } catch (error) {
+    gain.gain.value =
+    0.2;
 
-    console.error(error);
+    oscillator.start();
 
+    setTimeout(
+      function() {
 
-    status.innerHTML =
-      "❌ Camera access blocked.<br><br>" +
-      "Please allow camera access and reload.";
+        oscillator.stop();
+
+        audioContext.close();
+
+      },
+      duration
+    );
+
+  }
+
+  catch(error) {
+
+    console.log(
+      "Audio unavailable"
+    );
 
   }
 
 }
 
 
-// ======================================
-// QR SCANNER
-// ======================================
+// =====================================
+// VIBRATION
+// =====================================
+
+function vibrate(
+duration = 200
+) {
+
+  if (
+    "vibrate" in navigator
+  ) {
+
+    navigator.vibrate(
+      duration
+    );
+
+  }
+
+}
+
+
+// =====================================
+// START CAMERA
+// =====================================
+
+async function startCamera() {
+
+
+  showStatus(
+    "ready",
+    "📷 STARTING CAMERA..."
+  );
+
+
+  try {
+
+
+    const stream =
+    await navigator.mediaDevices
+    .getUserMedia({
+
+      video: {
+
+        facingMode: {
+
+          ideal:
+          "environment"
+
+        }
+
+      },
+
+      audio: false
+
+    });
+
+
+    stream
+    .getTracks()
+    .forEach(
+      track =>
+      track.stop()
+    );
+
+
+    showStatus(
+      "ready",
+      "🟢 READY TO SCAN"
+    );
+
+
+    startScanner();
+
+
+  }
+
+
+  catch(error) {
+
+
+    console.error(
+      error
+    );
+
+
+    showStatus(
+      "error",
+      "❌ CAMERA ACCESS BLOCKED"
+    );
+
+
+    result.innerHTML =
+
+    "Please allow camera access " +
+    "and reload the page.";
+
+  }
+
+}
+
+
+// =====================================
+// START QR SCANNER
+// =====================================
 
 function startScanner() {
 
+
   if (scanner) {
+
     return;
+
   }
 
 
   scanner =
-    new Html5QrcodeScanner(
+  new Html5QrcodeScanner(
 
-      "reader",
+    "reader",
 
-      {
+    {
 
-        fps: 10,
+      fps: 10,
 
-        qrbox: {
-          width: 250,
-          height: 250
-        },
+      qrbox: {
 
-        rememberLastUsedCamera: true
+        width: 250,
+
+        height: 250
 
       },
 
-      false
+      rememberLastUsedCamera:
+      true
 
-    );
+    },
+
+    false
+
+  );
 
 
   scanner.render(
+
     onScanSuccess,
+
     onScanFailure
+
   );
 
 
@@ -323,73 +665,82 @@ function startScanner() {
 }
 
 
-// ======================================
-// SCAN SUCCESS
-// ======================================
+// =====================================
+// QR SUCCESS
+// =====================================
 
-async function onScanSuccess(decodedText) {
+async function onScanSuccess(
+decodedText
+) {
 
 
   if (!scanning) {
+
     return;
+
   }
 
 
   scanning = false;
 
 
-  const result =
-    document.getElementById("result");
-
-
-  result.className = "";
+  showStatus(
+    "ready",
+    "🔄 CHECKING..."
+  );
 
 
   result.innerHTML =
-    "🔄 Checking applicant...";
+  "Checking applicant...";
 
 
   try {
 
 
     const response =
-      await fetch(
+    await fetch(
 
-        API_URL,
+      API_URL,
 
-        {
+      {
 
-          method: "POST",
+        method:
+        "POST",
 
-          headers: {
-            "Content-Type":
-              "text/plain;charset=utf-8"
-          },
+        headers: {
 
-          body: JSON.stringify({
+          "Content-Type":
+          "text/plain;charset=utf-8"
 
-            applicantId:
-              decodedText,
+        },
 
-            scannerId:
-              SCANNER_ID
+        body:
+        JSON.stringify({
 
-          })
+          applicantId:
+          decodedText,
 
-        }
+          scannerId:
+          SCANNER_ID
 
-      );
+        })
+
+      }
+
+    );
 
 
     const data =
-      await response.json();
+    await response.json();
 
 
-    // ==================================
+    // =================================
     // SUCCESS
-    // ==================================
+    // =================================
 
-    if (data.success) {
+    if (
+      data.success
+    ) {
 
 
       totalScans++;
@@ -397,23 +748,42 @@ async function onScanSuccess(decodedText) {
       successfulScans++;
 
 
-      result.className =
-        "success";
+      showStatus(
+
+        "success",
+
+        "🟢 CHECK-IN SUCCESSFUL"
+
+      );
 
 
       result.innerHTML =
 
-        "✅ CHECK-IN SUCCESSFUL" +
+      "<div style='font-size:30px;'>✓</div>" +
 
-        "<br><br>" +
+      "<div>" +
+      data.fullName +
+      "</div>" +
 
-        "👤 " +
-        data.fullName +
+      "<div style='font-size:18px;margin-top:8px;'>" +
+      "Applicant ID: " +
+      data.applicantId +
+      "</div>" +
 
-        "<br>" +
+      "<div style='margin-top:10px;font-size:17px;'>" +
+      "SCAN RECORDED" +
+      "</div>";
 
-        "🆔 " +
-        data.applicantId;
+
+      beep(
+        1000,
+        180
+      );
+
+
+      vibrate(
+        250
+      );
 
 
       addHistory(
@@ -428,15 +798,16 @@ async function onScanSuccess(decodedText) {
 
       );
 
-
     }
 
 
-    // ==================================
+    // =================================
     // DUPLICATE
-    // ==================================
+    // =================================
 
-    else if (data.duplicate) {
+    else if (
+      data.duplicate
+    ) {
 
 
       totalScans++;
@@ -444,23 +815,42 @@ async function onScanSuccess(decodedText) {
       duplicateScans++;
 
 
-      result.className =
-        "error";
+      showStatus(
+
+        "duplicate",
+
+        "🟠 ALREADY CHECKED IN"
+
+      );
 
 
       result.innerHTML =
 
-        "⚠️ ALREADY CHECKED IN" +
+      "<div style='font-size:30px;'>⚠️</div>" +
 
-        "<br><br>" +
+      "<div>" +
+      data.fullName +
+      "</div>" +
 
-        "👤 " +
-        data.fullName +
+      "<div style='font-size:18px;margin-top:8px;'>" +
+      "Applicant ID: " +
+      data.applicantId +
+      "</div>" +
 
-        "<br>" +
+      "<div style='margin-top:10px;font-size:17px;'>" +
+      "THIS APPLICANT WAS ALREADY SCANNED" +
+      "</div>";
 
-        "🆔 " +
-        data.applicantId;
+
+      beep(
+        500,
+        350
+      );
+
+
+      vibrate(
+        [200,100,200]
+      );
 
 
       addHistory(
@@ -475,13 +865,12 @@ async function onScanSuccess(decodedText) {
 
       );
 
-
     }
 
 
-    // ==================================
+    // =================================
     // INVALID
-    // ==================================
+    // =================================
 
     else {
 
@@ -489,17 +878,35 @@ async function onScanSuccess(decodedText) {
       totalScans++;
 
 
-      result.className =
-        "error";
+      showStatus(
+
+        "invalid",
+
+        "🔴 INVALID QR CODE"
+
+      );
 
 
       result.innerHTML =
 
-        "❌ INVALID QR CODE" +
+      "<div style='font-size:30px;'>❌</div>" +
 
-        "<br><br>" +
+      "<div>INVALID QR CODE</div>" +
 
-        decodedText;
+      "<div style='font-size:16px;margin-top:10px;'>" +
+      decodedText +
+      "</div>";
+
+
+      beep(
+        250,
+        500
+      );
+
+
+      vibrate(
+        400
+      );
 
 
       addHistory(
@@ -523,144 +930,168 @@ async function onScanSuccess(decodedText) {
   }
 
 
-  catch (error) {
+  catch(error) {
 
 
-    console.error(error);
+    console.error(
+      error
+    );
 
 
-    result.className =
-      "error";
+    showStatus(
+
+      "error",
+
+      "🔴 CONNECTION ERROR"
+
+    );
 
 
     result.innerHTML =
 
-      "❌ CONNECTION ERROR" +
-
-      "<br><br>" +
-
-      "Cannot reach the server.";
+    "The scanner cannot reach " +
+    "the server.";
 
 
-    // Allow another scan
-    setTimeout(function() {
+    vibrate(
+      400
+    );
 
-      scanning = true;
-
-    }, 2500);
-
-
-    return;
 
   }
 
 
-  // ==================================
-  // READY FOR NEXT SCAN
-  // ==================================
+  // =================================
+  // RETURN TO CAMERA
+  // =================================
 
-  setTimeout(function() {
+  setTimeout(
 
-
-    scanning = true;
-
-
-    result.className = "";
+    function() {
 
 
-    result.innerHTML =
-      "Ready to scan";
+      scanning = true;
 
 
-  }, 2500);
+      showStatus(
+
+        "ready",
+
+        "🟢 READY TO SCAN"
+
+      );
+
+
+      result.innerHTML =
+
+      "Point the camera at a QR code";
+
+
+    },
+
+    2500
+
+  );
 
 }
 
 
-// ======================================
-// ADD HISTORY
-// ======================================
+// =====================================
+// HISTORY
+// =====================================
 
 function addHistory(
 
-  fullName,
+fullName,
 
-  applicantId,
+applicantId,
 
-  scanResult,
+scanResult,
 
-  type
+type
 
 ) {
 
 
   const history =
-    document.getElementById("history");
+  document.getElementById(
+    "history"
+  );
 
 
-  // Remove "No scans yet"
   if (
     totalScans === 1
   ) {
 
-    history.innerHTML = "";
+    history.innerHTML =
+    "";
 
   }
 
 
   const item =
-    document.createElement("div");
+  document.createElement(
+    "div"
+  );
 
 
   item.className =
-    "scan-item " + type;
+  "scan-item " +
+  type;
 
 
   const now =
-    new Date();
+  new Date();
 
 
   const time =
-    now.toLocaleTimeString(
-      [],
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
-      }
-    );
+  now.toLocaleTimeString(
+    [],
+    {
+
+      hour:
+      "2-digit",
+
+      minute:
+      "2-digit",
+
+      second:
+      "2-digit"
+
+    }
+  );
 
 
   item.innerHTML =
 
-    '<div class="scan-time">' +
-      time +
-    '</div>' +
+  '<div class="scan-time">' +
+  time +
+  '</div>' +
 
-    '<div class="scan-name">' +
-      fullName +
-    '</div>' +
+  '<div class="scan-name">' +
+  fullName +
+  '</div>' +
 
-    '<div class="scan-id">' +
-      "Applicant ID: " +
-      applicantId +
-    '</div>' +
+  '<div class="scan-id">' +
+  "Applicant ID: " +
+  applicantId +
+  '</div>' +
 
-    '<div class="scan-result">' +
-      scanResult +
-    '</div>';
+  '<div class="scan-result">' +
+  scanResult +
+  '</div>';
 
 
-  // Put newest scan on top
-
-  history.prepend(item);
+  history.prepend(
+    item
+  );
 
 }
 
 
-// ======================================
-// UPDATE STATISTICS
-// ======================================
+// =====================================
+// STATISTICS
+// =====================================
 
 function updateStats() {
 
@@ -668,45 +1099,47 @@ function updateStats() {
   document.getElementById(
     "totalScans"
   ).innerText =
-    totalScans;
+  totalScans;
 
 
   document.getElementById(
     "successfulScans"
   ).innerText =
-    successfulScans;
+  successfulScans;
 
 
   document.getElementById(
     "duplicateScans"
   ).innerText =
-    duplicateScans;
+  duplicateScans;
 
 }
 
 
-// ======================================
+// =====================================
 // IGNORE SCAN FAILURES
-// ======================================
+// =====================================
 
-function onScanFailure(error) {
+function onScanFailure(
+error
+) {
 
 }
 
 
-// ======================================
-// SHOW SCANNER ID
-// ======================================
+// =====================================
+// SCANNER ID
+// =====================================
 
 document.getElementById(
   "scannerIdDisplay"
 ).innerText =
-  SCANNER_ID;
+SCANNER_ID;
 
 
-// ======================================
-// START CAMERA
-// ======================================
+// =====================================
+// START
+// =====================================
 
 window.addEventListener(
   "load",
