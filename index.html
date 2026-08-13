@@ -586,15 +586,9 @@ function updateConnectionStatus() {
 
 window.addEventListener(
 "online",
-function() {
-
-  updateConnectionStatus();
-
-  syncOfflineScans();
-
-}
+updateConnectionStatus
 );
-
+      
 window.addEventListener(
 "offline",
 updateConnectionStatus
@@ -1774,7 +1768,7 @@ loadLocalDatabase();
       
 loadOfflineQueue();
 
-syncOfflineScans();
+
 
 
 // =====================================
