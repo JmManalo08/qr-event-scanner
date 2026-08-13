@@ -267,7 +267,7 @@ SCANNER-01
 
 
 <button id="downloadButton"
-        onclick="downloadDatabase()">
+        onclick="window.downloadDatabase()">
 
 📥 DOWNLOAD APPLICANT DATABASE
 
@@ -762,6 +762,8 @@ async function downloadDatabase() {
   button.disabled = false;
 
 }
+
+window.downloadDatabase = downloadDatabase;
 
 
 // =====================================
