@@ -376,6 +376,57 @@ let duplicateScans = 0;
 
 let applicants = [];
 
+// =====================================
+// OFFLINE SCAN QUEUE
+// =====================================
+
+const OFFLINE_QUEUE_KEY = "qr_event_offline_queue";
+
+let offlineQueue = [];
+
+
+// Load saved offline scans
+function loadOfflineQueue() {
+
+  try {
+
+    const saved =
+      localStorage.getItem(
+        OFFLINE_QUEUE_KEY
+      );
+
+    offlineQueue =
+      saved ? JSON.parse(saved) : [];
+
+  } catch (error) {
+
+    console.error(
+      "Offline queue error:",
+      error
+    );
+
+    offlineQueue = [];
+
+  }
+
+}
+
+
+// Save offline scans
+function saveOfflineQueue() {
+
+  localStorage.setItem(
+
+    OFFLINE_QUEUE_KEY,
+
+    JSON.stringify(
+      offlineQueue
+    )
+
+  );
+
+}
+
 
 // =====================================
 // ELEMENTS
@@ -1444,6 +1495,8 @@ SCANNER_ID;
 // =====================================
 
 loadLocalDatabase();
+      
+loadOfflineQueue();
 
 
 // =====================================
