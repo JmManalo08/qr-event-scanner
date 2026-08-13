@@ -427,6 +427,110 @@ function saveOfflineQueue() {
 
 }
 
+// =====================================
+// SYNC OFFLINE SCANS
+// =====================================
+
+async function syncOfflineScans() {
+
+  if (!navigator.onLine) {
+    return;
+  }
+
+  if (!offlineQueue || offlineQueue.length === 0) {
+    return;
+  }
+
+  connectionStatus.innerHTML =
+    "🔄 SYNCING OFFLINE SCANS...";
+
+  connectionStatus.style.background =
+    "#1976d2";
+
+  const remainingScans = [];
+
+  for (const scan of offlineQueue) {
+
+    try {
+
+      const response = await fetch(
+        API_URL,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
+
+          body: JSON.stringify({
+            applicantId: scan.applicantId,
+            scannerId: scan.scannerId
+          })
+        }
+      );
+
+      const data =
+        await response.json();
+
+
+      if (data.success || data.duplicate) {
+
+        // Successfully handled by Apps Script
+        continue;
+
+      }
+
+
+      // Keep scan if server rejected it
+      remainingScans.push(scan);
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Offline sync failed:",
+        error
+      );
+
+      remainingScans.push(scan);
+
+    }
+
+  }
+
+
+  offlineQueue =
+    remainingScans;
+
+  saveOfflineQueue();
+
+
+  if (offlineQueue.length === 0) {
+
+    connectionStatus.innerHTML =
+      "🟢 ONLINE — ALL SCANS SYNCED";
+
+    connectionStatus.style.background =
+      "#168a3a";
+
+  }
+
+  else {
+
+    connectionStatus.innerHTML =
+      "🟠 ONLINE — " +
+      offlineQueue.length +
+      " SCANS PENDING";
+
+    connectionStatus.style.background =
+      "#e58a00";
+
+  }
+
+}
+
 
 // =====================================
 // ELEMENTS
@@ -482,7 +586,13 @@ function updateConnectionStatus() {
 
 window.addEventListener(
 "online",
-updateConnectionStatus
+function() {
+
+  updateConnectionStatus();
+
+  syncOfflineScans();
+
+}
 );
 
 window.addEventListener(
@@ -1663,6 +1773,8 @@ SCANNER_ID;
 loadLocalDatabase();
       
 loadOfflineQueue();
+
+syncOfflineScans();
 
 
 // =====================================
