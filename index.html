@@ -1345,6 +1345,127 @@ function processOfflineScan(decodedText) {
   }
 
 
+  // Find applicant
+  const applicant =
+    findApplicant(decodedText);
+
+
+  // Applicant not found
+  if (!applicant) {
+
+    totalScans++;
+
+    showStatus(
+      "invalid",
+      "🔴 INVALID QR CODE"
+    );
+
+    result.innerHTML =
+      "<div style='font-size:30px;'>❌</div>" +
+      "<div>APPLICANT NOT FOUND</div>" +
+      "<div style='font-size:16px;margin-top:8px;'>" +
+      decodedText +
+      "</div>";
+
+    beep(250, 500);
+    vibrate(400);
+
+    addHistory(
+      "Unknown Applicant",
+      decodedText,
+      "INVALID QR",
+      "invalid"
+    );
+
+    updateStats();
+
+    return;
+  }
+
+
+  // Create offline scan
+  const offlineScan = {
+
+    scanId:
+      Date.now().toString() +
+      "-" +
+      Math.random()
+        .toString(36)
+        .substring(2, 10),
+
+    applicantId:
+      applicant.applicantId,
+
+    fullName:
+      applicant.fullName,
+
+    scannerId:
+      SCANNER_ID,
+
+    scanTime:
+      new Date().toISOString(),
+
+    offline:
+      true
+
+  };
+
+
+  // Save to offline queue
+  offlineQueue.push(
+    offlineScan
+  );
+
+  saveOfflineQueue();
+
+
+  // Update statistics
+  totalScans++;
+  successfulScans++;
+
+
+  // Show success
+  showStatus(
+    "success",
+    "🟢 OFFLINE CHECK-IN"
+  );
+
+
+  result.innerHTML =
+    "<div style='font-size:40px;'>✓</div>" +
+    "<div>" +
+    applicant.fullName +
+    "</div>" +
+    "<div style='font-size:18px;margin-top:8px;'>" +
+    "Applicant ID: " +
+    applicant.applicantId +
+    "</div>" +
+    "<div style='margin-top:12px;font-size:18px;'>" +
+    "💾 SAVED ON THIS DEVICE" +
+    "</div>" +
+    "<div style='margin-top:6px;font-size:14px;'>" +
+    "Pending upload: " +
+    offlineQueue.length +
+    "</div>";
+
+
+  beep(1000, 180);
+  vibrate(250);
+
+
+  addHistory(
+    applicant.fullName,
+    applicant.applicantId,
+    "OFFLINE — PENDING SYNC",
+    "success"
+  );
+
+
+  updateStats();
+
+}
+
+
 // =====================================
 // HISTORY
 // =====================================
